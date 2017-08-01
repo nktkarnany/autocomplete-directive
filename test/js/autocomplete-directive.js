@@ -13,12 +13,12 @@ autocomplete.directive('autocomplete', ['api', function (api) {
                 api.fetchItems({
                     searchString: s,
                     cookie: 0,
-                    limit: 5
+                    limit: 10
                 }).then(
                     function (r) {
                         var response = r.data;
                         if(response.code == 0) {
-                            $sope.items = response.items;
+                            $scope.items = response.items;
                         }
                     },
                     function (e) {
