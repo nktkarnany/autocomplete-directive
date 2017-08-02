@@ -1,24 +1,26 @@
 var autocomplete = angular.module("autocomplete", []);
 
-autocomplete.directive('autocomplete', ['api', function (api) {
+autocomplete.directive('autocomplete', ['$http', function ($http) {
     return {
         restrict: 'E',
         scope: {
             placeholder: '@',
-            items: '='
+            fetch: '=',
+            item: '='
         },
         controller: function ($scope) {
             $scope.search = function (s) {
-                $scope.items = [];
-                api.fetchItems({
+                $scope.list = [];
+                $scope.fetch.req = {
                     searchString: s,
                     cookie: 0,
                     limit: 10
-                }).then(
+                };
+                $http.post($scope.fetch.url, JSON.stringify($scope.fetch.req)).then(
                     function (r) {
                         var response = r.data;
-                        if(response.code == 0) {
-                            $scope.items = response.items;
+                        if (response.code == 0) {
+                            $scope.list = response.items;
                         }
                     },
                     function (e) {
@@ -26,20 +28,17 @@ autocomplete.directive('autocomplete', ['api', function (api) {
                     }
                 );
             }
+            $scope.selected = function (index) {
+                $scope.item = $scope.list[index].name;
+                console.log($scope.item);
+                $scope.list = [];
+            }
         },
-        template: '<div class="dropdown ng-class:{\'open\':items.length > 0}">\
-                    <input id="autocomplete" type="text" class="form-control" placeholder="{{placeholder}}" aria-haspopup="true" aria-expanded="false" ng-model="s" ng-change="search(s)">\
+        template: '<div class="dropdown ng-class:{\'open\':list.length > 0}">\
+                    <input id="autocomplete" type="text" class="form-control" placeholder="{{placeholder}}" aria-haspopup="true" aria-expanded="false" ng-model="item" ng-change="search(item)" ng-blur="list = []">\
                     <ul class="dropdown-menu" aria-labelledby="autocomplete" style="width:100%;">\
-                        <li ng-repeat="item in items"><a href="">{{item.name}}</a></li>\
+                        <li ng-repeat="item in list" ng-click="selected($index)"><a href="">{{item.name}}</a></li>\
                     </ul>\
                    </div>'
     };
-}]);
-
-autocomplete.service('api', ['$http', function ($http) {
-
-    this.fetchItems = function (req) {
-        return $http.post('http://localhost:8080/SearchItems', JSON.stringify(req));
-    }
-
 }]);
